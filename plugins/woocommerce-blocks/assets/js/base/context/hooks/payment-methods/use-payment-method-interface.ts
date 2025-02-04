@@ -14,7 +14,7 @@ import { useSelect, useDispatch } from '@wordpress/data';
 import {
 	checkoutStore,
 	PAYMENT_STORE_KEY,
-	CART_STORE_KEY,
+	cartStore,
 } from '@woocommerce/block-data';
 import { ValidationInputError } from '@woocommerce/blocks-components';
 
@@ -133,9 +133,9 @@ export const usePaymentMethodInterface = (): PaymentMethodInterface => {
 	} = useShippingData();
 
 	const { billingAddress, shippingAddress } = useSelect( ( select ) =>
-		select( CART_STORE_KEY ).getCustomerData()
+		select( cartStore ).getCustomerData()
 	);
-	const { setShippingAddress } = useDispatch( CART_STORE_KEY );
+	const { setShippingAddress } = useDispatch( cartStore );
 	const { cartItems, cartFees, cartTotals, extensions } = useStoreCart();
 	const { appliedCoupons } = useStoreCartCoupons();
 	const currentCartTotals = useRef(

@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { useDispatch, useSelect } from '@wordpress/data';
-import { CART_STORE_KEY as storeKey } from '@woocommerce/block-data';
+import { cartStore } from '@woocommerce/block-data';
 import type { BillingAddress, ShippingAddress } from '@woocommerce/settings';
 
 export interface CustomerDataType {
@@ -18,13 +18,13 @@ export interface CustomerDataType {
  */
 export const useCustomerData = (): CustomerDataType => {
 	const { customerData, isInitialized } = useSelect( ( select ) => {
-		const store = select( storeKey );
+		const store = select( cartStore );
 		return {
 			customerData: store.getCustomerData(),
 			isInitialized: store.hasFinishedResolution( 'getCartData' ),
 		};
 	} );
-	const { setShippingAddress, setBillingAddress } = useDispatch( storeKey );
+	const { setShippingAddress, setBillingAddress } = useDispatch( cartStore );
 
 	return {
 		isInitialized,

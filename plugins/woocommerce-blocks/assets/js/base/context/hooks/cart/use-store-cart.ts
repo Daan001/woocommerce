@@ -6,7 +6,7 @@
 import fastDeepEqual from 'fast-deep-equal/es6';
 import { useRef } from '@wordpress/element';
 import {
-	CART_STORE_KEY as storeKey,
+	cartStore,
 	EMPTY_CART_COUPONS,
 	EMPTY_CART_ITEMS,
 	EMPTY_CART_CROSS_SELLS,
@@ -187,7 +187,7 @@ export const useStoreCart = (
 				};
 			}
 
-			const store = select( storeKey );
+			const store = select( cartStore );
 			const cartData = store.getCartData();
 			const cartErrors = store.getCartErrors();
 			const cartTotals = store.getCartTotals();
@@ -195,7 +195,7 @@ export const useStoreCart = (
 				! store.hasFinishedResolution( 'getCartData' );
 
 			const isLoadingRates = store.isCustomerDataUpdating();
-			const { receiveCart, receiveCartContents } = dispatch( storeKey );
+			const { receiveCart, receiveCartContents } = dispatch( cartStore );
 
 			const cartFees =
 				cartData.fees.length > 0
