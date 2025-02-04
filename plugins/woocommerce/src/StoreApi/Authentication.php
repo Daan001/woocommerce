@@ -1,4 +1,5 @@
 <?php
+declare( strict_types=1 );
 namespace Automattic\WooCommerce\StoreApi;
 
 use Automattic\WooCommerce\StoreApi\Utilities\RateLimits;
@@ -21,6 +22,21 @@ class Authentication {
 		add_action( 'set_logged_in_cookie', array( $this, 'set_logged_in_cookie' ) );
 		add_filter( 'rest_pre_serve_request', array( $this, 'send_cors_headers' ), 10, 3 );
 		add_filter( 'rest_allowed_cors_headers', array( $this, 'allowed_cors_headers' ) );
+
+		// If cart has a valid token, override the core session class.
+		if ( isset( $_SERVER['HTTP_CART_TOKEN'] ) ) {
+			$cart_token      = wc_clean( wp_unslash( $_SERVER['HTTP_CART_TOKEN'] ?? '' ) );
+			$has_valid_token = JsonWebToken::validate( $cart_token, $this->get_cart_token_secret() );
+			if ( $has_valid_token ) {
+				// Overrides the core session class.
+				add_filter(
+					'woocommerce_session_handler',
+					function () {
+						return SessionHandler::class;
+					}
+				);
+			}
+		}
 
 		// Remove the default CORS headers--we will add our own.
 		remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
@@ -69,7 +85,7 @@ class Authentication {
 
 		// Allow preflight requests, certain http origins, and any origin if a cart token is present. Preflight requests
 		// are allowed because we'll be unable to validate cart token headers at that point.
-		if ( $this->is_preflight() || $this->has_valid_cart_token( $request ) || is_allowed_http_origin( $origin ) ) {
+		if ( $this->is_preflight() || $this->has_valid_cart_token( $request->get_header( 'Cart-Token' ) ) || is_allowed_http_origin( $origin ) ) {
 			$server->send_header( 'Access-Control-Allow-Origin', $origin );
 		}
 
@@ -94,13 +110,23 @@ class Authentication {
 	/**
 	 * Checks if we're using a cart token to access the Store API.
 	 *
-	 * @param \WP_REST_Request $request Request object.
+	 * @param string $cart_token The cart token. This will be looked up in the request header if not provided.
 	 * @return boolean
 	 */
-	protected function has_valid_cart_token( \WP_REST_Request $request ) {
-		$cart_token = $request->get_header( 'Cart-Token' );
-
+	public function has_valid_cart_token( $cart_token = null ) {
+		if ( ! $cart_token ) {
+			$cart_token = $this->get_cart_token();
+		}
 		return $cart_token && JsonWebToken::validate( $cart_token, $this->get_cart_token_secret() );
+	}
+
+	/**
+	 * Gets the cart token from the request header.
+	 *
+	 * @return string
+	 */
+	protected function get_cart_token() {
+		return wc_clean( wp_unslash( $_SERVER['HTTP_CART_TOKEN'] ?? '' ) );
 	}
 
 	/**

@@ -11,6 +11,7 @@ use Automattic\WooCommerce\StoreApi\Formatters\MoneyFormatter;
 use Automattic\WooCommerce\StoreApi\RoutesController;
 use Automattic\WooCommerce\StoreApi\SchemaController;
 use Automattic\WooCommerce\StoreApi\Schemas\ExtendSchema;
+use Automattic\WooCommerce\StoreApi\Utilities\CartController;
 
 /**
  * StoreApi Main Class.
@@ -37,7 +38,22 @@ final class StoreApi {
 				if ( ! wc_rest_should_load_namespace( 'wc/store' ) ) {
 					return;
 				}
-				self::container()->get( Authentication::class )->init();
+				$authentication = self::container()->get( Authentication::class );
+				$authentication->init();
+
+				// If cart has a valid token, override the core session class.
+				if ( $authentication->has_valid_cart_token() ) {
+					add_filter(
+						'woocommerce_session_handler',
+						function () {
+							return SessionHandler::class;
+						}
+					);
+				}
+
+				$cart_controller = new CartController();
+				$cart_controller->load_cart();
+				$cart_controller->normalize_cart();
 			},
 			11
 		);
