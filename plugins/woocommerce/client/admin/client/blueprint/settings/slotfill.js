@@ -37,7 +37,6 @@ const icons = {
 
 const Blueprint = () => {
 	const [ exportEnabled, setExportEnabled ] = useState( true );
-	const [ exportAsZip, setExportAsZip ] = useState( false );
 	const [ error, setError ] = useState( null );
 
 	const blueprintStepGroups =
